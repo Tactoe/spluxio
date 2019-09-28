@@ -12,7 +12,7 @@ function isWithinBounds(x, y, minPos, maxPos) {
   return (x >= minPos[0] && x <= maxPos[0] && y >= minPos[1] && y <= maxPos[1]);
 }
 
-function deleteElem(array, elem) {
+function deleteArrayElem(array, elem) {
   let index = array.indexOf(elem);
   if (index > -1) {
     array.splice(index, 1);
@@ -28,10 +28,30 @@ class Player {
     }
     this.dir = [0, 0];
     this.speed = 3;
+    this.color = 'blue';
+    this.trail = [];
+    this.next = 0;
   }
 
   draw () {
+    if (millis() > this.next) {
+      this.trail.push(this.pos);
+      this.next = millis() + 100;
+    }
+    push();
+    fill(this.color);
+    strokeWeight(4);
+    stroke(this.color);
+    if (this.trail.length > 4) {
+      for(let i = 0; i < this.trail.length - 1; i++) {
+        line(this.trail[i].x, this.trail[i].y, this.trail[i + 1].x, this.trail[i + 1].y);
+      }
+    }
+    if (this.trail.length > 1000000) {
+      this.trail.splice(0, 1);
+    }
     ellipse(this.pos.x, this.pos.y, 10);
+    pop();
   }
 }
 
@@ -40,7 +60,26 @@ class LocalPlayer extends Player {
   draw () {
     this.pos.x += this.dir[0] * this.speed / 60;
     this.pos.y += this.dir[1] * this.speed / 60;
+    if (millis() > this.next) {
+      // console.log('pusing', this.pos)
+      this.trail.push({x: this.pos.x, y: this.pos.y});
+      // console.log(this.trail)
+      this.next = millis() + 100;
+    }
+    push();
+    fill(this.color);
+    strokeWeight(4);
+    stroke(this.color);
+    if (this.trail.length > 4) {
+      for(let i = 0; i < this.trail.length - 1; i++) {
+        line(this.trail[i].x, this.trail[i].y, this.trail[i + 1].x, this.trail[i + 1].y);
+      }
+    }
+    if (this.trail.length > 1000000) {
+      this.trail.splice(0, 1);
+    }
     ellipse(this.pos.x, this.pos.y, 10);
+    pop();
     socket.emit('updatePosition', {userid: localPlayerId, pos: {x: this.pos.x, y: this.pos.y}})
   }
 
